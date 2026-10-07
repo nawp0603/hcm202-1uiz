@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCM202 — Ôn Trắc Nghiệm (410 câu)</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --card: #fff; --text: #1a1a2e; --muted: #6b7280;
+    --primary: #2563eb; --primary-d: #1d4ed8; --green: #16a34a; --green-bg: #dcfce7;
+    --red: #dc2626; --red-bg: #fee2e2; --border: #e5e7eb; --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  header { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; padding: 20px; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+  header h1 { font-size: 1.3rem; }
+  header p { opacity: .85; font-size: .9rem; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .toolbar button, .toolbar select, .toolbar input { padding: 8px 14px; border-radius: 8px; border: none; font-size: .9rem; }
+  .toolbar button { background: rgba(255,255,255,.18); color: #fff; cursor: pointer; font-weight: 600; transition: background .15s; }
+  .toolbar button:hover { background: rgba(255,255,255,.32); }
+  .toolbar button.active { background: #fff; color: #1e3a8a; }
+  .toolbar input, .toolbar select { background: #fff; color: var(--text); outline: none; }
+  .toolbar input { flex: 1; min-width: 160px; }
+  .stats { max-width: 900px; margin: 16px auto 0; padding: 0 16px; display: flex; gap: 10px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); }
+  .stats b { color: var(--text); }
+  main { max-width: 900px; margin: 0 auto; padding: 16px 16px 80px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.08); border-left: 4px solid var(--border); }
+  .card.answered-correct { border-left-color: var(--green); }
+  .card.answered-wrong { border-left-color: var(--red); }
+  .q-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .q-num { font-weight: 700; color: var(--primary); font-size: .9rem; }
+  .q-status { font-size: .8rem; font-weight: 700; }
+  .q-status.ok { color: var(--green); } .q-status.bad { color: var(--red); }
+  .q-text { font-weight: 600; margin-bottom: 12px; white-space: pre-line; }
+  .choice { display: flex; gap: 10px; align-items: flex-start; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all .12s; }
+  .choice:hover { border-color: var(--primary); background: #eff6ff; }
+  .choice .key { font-weight: 700; text-transform: uppercase; background: #f1f5f9; border-radius: 6px; min-width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; }
+  .choice.correct { border-color: var(--green); background: var(--green-bg); }
+  .choice.correct .key { background: var(--green); color: #fff; }
+  .choice.wrong-pick { border-color: var(--red); background: var(--red-bg); }
+  .choice.wrong-pick .key { background: var(--red); color: #fff; }
+  .choice.locked { cursor: default; }
+  .choice.locked:not(.correct):not(.wrong-pick):hover { border-color: var(--border); background: none; }
+  .answer-line { margin-top: 10px; font-size: .9rem; font-weight: 700; }
+  .answer-line.ok { color: var(--green); } .answer-line.bad { color: var(--red); }
+  .actions { margin-top: 8px; display: flex; gap: 8px; }
+  .actions button { padding: 6px 14px; border-radius: 7px; border: 1px solid var(--border); background: #f8fafc; cursor: pointer; font-size: .85rem; }
+  .actions button:hover { border-color: var(--primary); color: var(--primary); }
+  /* exam bar */
+  #exam-bar { display: none; background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px; }
+  #exam-bar.show { display: block; }
+  #exam-bar .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  #exam-bar button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+  #btn-start { background: var(--primary); color: #fff; } #btn-start:hover { background: var(--primary-d); }
+  #btn-submit { background: var(--green); color: #fff; }
+  #btn-quit { background: #e5e7eb; }
+  #exam-meta { display: flex; gap: 18px; margin-bottom: 10px; font-weight: 700; }
+  #exam-result { margin-top: 10px; font-size: 1.05rem; font-weight: 700; }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 20px; }
+  mark { background: #fef08a; border-radius: 3px; padding: 0 2px; }
+  @media (max-width: 600px) { header h1 { font-size: 1.05rem; } .card { padding: 14px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 HCM202 — Ôn Trắc Nghiệm Tư tưởng Hồ Chí Minh</h1>
+  <p id="subtitle">Đang tải dữ liệu...</p>
+  <div class="toolbar">
+    <button id="mode-study" class="active" onclick="setMode('study')">📖 Chế độ học</button>
+    <button id="mode-exam" onclick="setMode('exam')">⏱️ Thi thử</button>
+    <button onclick="shuffleQuestions()">🔀 Đảo câu hỏi</button>
+    <button id="btn-hide" onclick="toggleAnswers()">🙈 Giấu đáp án</button>
+    <button onclick="resetProgress()" title="Xóa lịch sử làm bài">🗑️ Reset</button>
+    <select id="filter" onchange="render()">
+      <option value="all">Tất cả câu</option>
+      <option value="unanswered">Chưa làm</option>
+      <option value="correct">Đã đúng</option>
+      <option value="wrong">Đã sai</option>
+    </select>
+    <input id="search" type="text" placeholder="🔍 Tìm kiếm nội dung câu hỏi..." oninput="render()">
+  </div>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<main>
+  <div id="exam-bar">
+    <div class="row" id="exam-setup">
+      <label>Số câu: <select id="exam-count"><option>10</option><option>20</option><option selected>40</option><option>60</option><option value="all">Tất cả</option></select></label>
+      <label>Phút: <select id="exam-min"><option>10</option><option selected>30</option><option>45</option><option>60</option><option value="0">Không giới hạn</option></select></label>
+      <button id="btn-start" onclick="startExam()">Bắt đầu thi ▶</button>
+    </div>
+    <div id="exam-live" style="display:none">
+      <div id="exam-meta"><span id="exam-timer">⏱ --:--</span><span id="exam-done">Đã làm: 0/0</span></div>
+      <div class="row">
+        <button id="btn-submit" onclick="submitExam()">Nộp bài</button>
+        <button id="btn-quit" onclick="quitExam()">Thoát</button>
+      </div>
+      <div id="exam-result"></div>
+    </div>
+  </div>
+  <div id="list"></div>
+</main>
+
+<footer>Học tốt nhé! 🍀 — Dữ liệu từ HCM202_formatted.json</footer>
+
+<script>
+let ALL = [];            // toàn bộ câu hỏi
+let order = [];          // thứ tự hiển thị (index vào ALL)
+let progress = {};       // id -> {pick: [..], ok: bool}
+let mode = 'study';
+let hideAnswers = false;
+let exam = null;         // {ids, picks, deadline, timerId}
+
+const $ = id => document.getElementById(id);
+const norm = s => (s || '').toLowerCase();
+const letters = q => Object.keys(q.choices).sort();
+
+try { progress = JSON.parse(localStorage.getItem('hcm202-progress') || '{}'); } catch(e) { progress = {}; }
+function save() { localStorage.setItem('hcm202-progress', JSON.stringify(progress)); }
+
+fetch('HCM202_formatted.json')
+  .then(r => r.json())
+  .then(data => {
+    ALL = data;
+    order = ALL.map((_, i) => i);
+    $('subtitle').textContent = `${ALL.length} câu hỏi • tiến độ được lưu tự động`;
+    render();
+  })
+  .catch(() => { $('subtitle').textContent = '❌ Không tải được file JSON. Hãy mở web qua local server.'; });
+
+function setMode(m) {
+  mode = m;
+  $('mode-study').classList.toggle('active', m === 'study');
+  $('mode-exam').classList.toggle('active', m === 'exam');
+  $('exam-bar').classList.toggle('show', m === 'exam');
+  render();
+}
+
+function shuffleQuestions() {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  render();
+  window.scrollTo({ top: 0 });
+}
+
+function toggleAnswers() {
+  hideAnswers = !hideAnswers;
+  $('btn-hide').textContent = hideAnswers ? '👁️ Hiện đáp án' : '🙈 Giấu đáp án';
+  render();
+}
+
+function resetProgress() {
+  if (!confirm('Xóa toàn bộ lịch sử làm bài?')) return;
+  progress = {}; save(); render();
+}
+
+function filteredIndexes() {
+  const f = $('filter').value, kw = norm($('search').value.trim());
+  let idx = (exam && mode === 'exam' && exam.live) ? exam.ids : order;
+  return idx.filter(i => {
+    const q = ALL[i], p = progress[q.id];
+    if (f === 'unanswered' && p) return false;
+    if (f === 'correct' && (!p || !p.ok)) return false;
+    if (f === 'wrong' && (!p || p.ok)) return false;
+    if (kw && !norm(q.question + ' ' + Object.values(q.choices).join(' ')).includes(kw)) return false;
+    return true;
+  });
+}
+
+function pick(qid, key) {
+  const q = ALL.find(x => x.id === qid);
+  const correct = q.correctAnswer.map(s => norm(s.trim()));
+  if (mode === 'exam' && exam && exam.live) {
+    // thi thử: cho chọn nhiều nếu đáp án nhiều, bấm lại để bỏ chọn
+    const cur = exam.picks[qid] || [];
+    const k = norm(key);
+    exam.picks[qid] = cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k];
+    render();
+    updateExamMeta();
+    return;
+  }
+  const isMulti = correct.length > 1;
+  const prev = progress[qid];
+  if (!isMulti || !prev) {
+    const p = isMulti ? [norm(key)] : [norm(key)];
+    const ok = isMulti ? false : correct.includes(norm(key)); // multi: chấm khi đủ (xử lý dưới)
+    progress[qid] = { pick: p, ok: isMulti ? null : ok };
+  } else {
+    // câu nhiều đáp án: toggle
+    const k = norm(key);
+    let arr = prev.pick.includes(k) ? prev.pick.filter(x => x !== k) : [...prev.pick, k];
+    const ok = arr.length === correct.length && arr.every(x => correct.includes(x));
+    progress[qid] = { pick: arr, ok: arr.length ? ok : null };
+  }
+  save(); render();
+}
+
+function reveal(qid) {
+  const q = ALL.find(x => x.id === qid);
+  progress[qid] = { pick: [], ok: false, revealed: true };
+  save(); render();
+}
+
+function hi(text, kw) {
+  if (!kw) return text;
+  const i = norm(text).indexOf(kw);
+  if (i < 0) return text;
+  return text.slice(0, i) + '<mark>' + text.slice(i, i + kw.length) + '</mark>' + hi(text.slice(i + kw.length), kw);
+}
+
+function render() {
+  const kw = norm($('search').value.trim());
+  const idx = filteredIndexes();
+  const total = ALL.length;
+  const done = Object.keys(progress).length;
+  const okCount = Object.values(progress).filter(p => p.ok === true).length;
+  const wrongCount = Object.values(progress).filter(p => p.ok === false).length;
+  $('stats').innerHTML = `<span>Tổng: <b>${total}</b></span><span>Đã làm: <b>${done}</b></span><span>✅ Đúng: <b>${okCount}</b></span><span>❌ Sai: <b>${wrongCount}</b></span><span>Hiển thị: <b>${idx.length}</b></span>`;
+
+  const inExam = mode === 'exam' && exam && exam.live;
+  $('list').innerHTML = idx.map((i, n) => {
+    const q = ALL[i], keys = letters(q);
+    const correct = q.correctAnswer.map(s => norm(s.trim()));
+    const multi = correct.length > 1;
+    let cardCls = '', status = '', picked, showAns, ansLine = '';
+
+    if (inExam) {
+      picked = exam.picks[q.id] || [];
+      showAns = false;
+    } else {
+      const p = progress[q.id];
+      picked = p ? p.pick : [];
+      const answered = !!p && (p.ok !== null && p.ok !== undefined);
+      showAns = !hideAnswers && answered;
+      if (p && p.ok === true) { cardCls = 'answered-correct'; status = '<span class="q-status ok">✅ Đúng</span>'; }
+      else if (p && p.ok === false) { cardCls = 'answered-wrong'; status = '<span class="q-status bad">' + (p.revealed ? '👁️ Đã xem đáp án' : '❌ Sai') + '</span>'; }
+    }
+
+    const choices = keys.map(k => {
+      const kn = norm(k);
+      let cls = 'choice';
+      if (!inExam && showAns) {
+        cls += ' locked';
+        if (correct.includes(kn)) cls += ' correct';
+        else if (picked.includes(kn)) cls += ' wrong-pick';
+      } else if (picked.includes(kn)) {
+        cls += inExam ? ' correct' : '';
+      }
+      if (inExam && picked.includes(kn)) cls += ' correct';
+      return `<div class="${cls}" onclick="pick('${q.id}','${k}')"><span class="key">${k}</span><span>${q.choices[k]}</span></div>`;
+    }).join('');
+
+    if (!inExam && showAns) {
+      const p = progress[q.id];
+      ansLine = p.ok
+        ? `<div class="answer-line ok">✅ Chính xác! Đáp án: ${q.correctAnswer.join(', ').toUpperCase()}</div>`
+        : `<div class="answer-line bad">Đáp án đúng: ${q.correctAnswer.join(', ').toUpperCase()}</div>`;
+    }
+    const multiTag = multi ? ' <span style="font-size:.75rem;color:var(--muted)">(chọn nhiều)</span>' : '';
+    const btnRow = (!inExam && !progress[q.id])
+      ? `<div class="actions"><button onclick="reveal('${q.id}')">👁️ Xem đáp án</button></div>` : '';
+
+    return `<div class="card ${cardCls}">
+      <div class="q-head"><span class="q-num">Câu ${q.questionNumber}${multiTag}</span>${status}</div>
+      <div class="q-text">${hi(q.question, kw)}</div>
+      ${choices}${ansLine}${btnRow}
+    </div>`;
+  }).join('') || '<p style="text-align:center;color:var(--muted)">Không có câu nào khớp bộ lọc.</p>';
+}
+
+/* ---------- Thi thử ---------- */
+function startExam() {
+  const c = $('exam-count').value;
+  const pool = [...order];
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const ids = c === 'all' ? pool : pool.slice(0, parseInt(c));
+  const min = parseInt($('exam-min').value);
+  exam = { ids, picks: {}, live: true, deadline: min > 0 ? Date.now() + min * 60000 : null, timerId: null };
+  $('exam-setup').style.display = 'none';
+  $('exam-live').style.display = 'block';
+  $('exam-result').textContent = '';
+  if (exam.deadline) {
+    exam.timerId = setInterval(() => {
+      const left = exam.deadline - Date.now();
+      if (left <= 0) { submitExam(); return; }
+      const m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
+      $('exam-timer').textContent = `⏱ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }, 500);
+  } else $('exam-timer').textContent = '⏱ Không giới hạn';
+  updateExamMeta(); render();
+  window.scrollTo({ top: 0 });
+}
+
+function updateExamMeta() {
+  if (!exam) return;
+  const n = Object.values(exam.picks).filter(a => a.length).length;
+  $('exam-done').textContent = `Đã làm: ${n}/${exam.ids.length}`;
+}
+
+function submitExam() {
+  if (!exam || !exam.live) return;
+  if (exam.timerId) clearInterval(exam.timerId);
+  let score = 0;
+  exam.ids.forEach(i => {
+    const q = ALL[i];
+    const correct = q.correctAnswer.map(s => norm(s.trim())).sort();
+    const got = (exam.picks[q.id] || []).slice().sort();
+    const ok = got.length === correct.length && got.every((x, k) => x === correct[k]);
+    if (ok) score++;
+    progress[q.id] = { pick: got, ok };
+  });
+  save();
+  exam.live = false;
+  const pct = (score / exam.ids.length * 10);
+  const icon = pct >= 5 ? '🎉' : '💪';
+  $('exam-result').innerHTML = `${icon} Kết quả: <b>${score}/${exam.ids.length}</b> — ${pct.toFixed(1)} điểm (thang 10). ${pct >= 5 ? 'Đạt! Giỏi lắm!' : 'Chưa đạt, ôn lại nhé!'}`;
+  updateExamMeta(); render();
+  window.scrollTo({ top: 0 });
+}
+
+function quitExam() {
+  if (exam && exam.timerId) clearInterval(exam.timerId);
+  exam = null;
+  $('exam-setup').style.display = 'flex';
+  $('exam-live').style.display = 'none';
+  render();
+}
+</script>
+</body>
+</html>
